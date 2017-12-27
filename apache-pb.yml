@@ -1,0 +1,5 @@
+ - hosts: nexus
+   tasks:
+     - name: Install apache via apt-get
+       apt: pkg=apache2 state=installed update_cache=true
+       become: true

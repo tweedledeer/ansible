@@ -1,0 +1,14 @@
+ - hosts: nexus
+   tasks:
+   - name: install apache 
+     become: true     
+     yum:
+      name: httpd
+      state: installed
+   - name: install different tools
+     become: true
+     yum:
+      list:
+      - htop
+      - wget
+      - lsof 

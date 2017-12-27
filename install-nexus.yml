@@ -1,0 +1,98 @@
+- name: Installing nexus to linux machine logbook
+  hosts: all
+  gather_facts: False
+  tasks:
+
+#  - name: update packages - no need, java is not required
+#    become: True
+#    shell: 'yum update -y'
+
+#  - name: install java 8   // Doesn't needed: AWS machines already has java 8
+#    become: True
+#    yum: name=java-1.8.0-openjdk.x86_64:latest state=installed
+
+  - name: create directory for app
+    become: True
+    file: path=/app state=directory owner=ec2-user
+    register: result
+
+  - name: wget nexus archieve to app dir  - // Just for an example
+    become: True
+    get_url: url=https://sonatype-download.global.ssl.fastly.net/nexus/3/nexus-3.0.2-02-unix.tar.gz dest=/app
+    register: result
+
+  - name: untar nexus
+    become: True
+    unarchive:
+     src: https://sonatype-download.global.ssl.fastly.net/nexus/3/nexus-3.0.2-02-unix.tar.gz
+     dest: /app
+     remote_src: yes
+    register: result
+
+  - name: Check if dir exists with unarchieved nexus
+    stat: path=/app/nexus-3.0.2-02
+    register: status
+
+  - name: Rename unarchieved nexus dir to 'nexus'
+    command: creates="/app/nexus" mv /app/nexus-3.0.2-02 /app/nexus
+    when: status.stat.exists
+
+#  - name: rename directory nexus - doesn't work; not able to delete old dir
+#    become: True
+#    file:
+#     src: /app/nexus-3.0.2-02
+#     dest: /app/nexus
+#     state: hard
+#    when: result.failed==0
+
+
+#  - name: Create user nexus
+#    become: True
+#    user:
+#     name: nexus
+#     comment: Nexus user
+#     group: nexus
+#     shell: /bin/bash
+
+  - name: Create nexus user
+    become: True
+    user:
+      name: nexus
+      shell: /bin/bash
+    register: nexus
+#      update_password: on_create
+#      password: "{{ 'password123' | password_hash('sha512') }}"
+
+  - name: Change /app/nexus directory's owner to nexus user
+    become: True
+    file:
+     path: /app/nexus
+     owner: nexus
+     group: nexus
+     recurse: yes
+
+  - name: Set the nexus property run_as_user. Warning! will rewrite /nexus/bin/nexus.rc file
+    become: True
+    copy:
+     content: run_as_user="nexus"
+     dest: /app/nexus/bin/nexus.rc
+
+  - name: Create symlink for nexus service script to /etc/init.d folder
+    become: True
+    file:
+     src: /app/nexus/bin/nexus
+     dest: /etc/init.d/nexus
+     state: link
+
+  - name: Start nexus
+    become: True
+    become_user: nexus
+    service: name=nexus state=started
+
+
+
+
+
+
+
+

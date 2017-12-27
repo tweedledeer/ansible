@@ -1,0 +1,46 @@
+ - hosts: nexus
+   gather_facts: False
+   tasks:
+   - name: install different tools
+     become: True
+     register: result
+     notify: vim installed
+     yum: name={{item}} state=absent
+     with_items:
+     - vim
+     - mc
+
+ #  - name: other way to install multiple
+ #    yum:
+ #     list:
+ #     - facter
+ #     - iftop
+ #    when: result.failed == 0
+
+#111     - name: print debug
+#       debug:
+#        msg: "Result of setting vim up: {{ result}}"
+
+#   - name: check if lsof installed
+#     shell: lsof -i :8080
+#     ignore_errors: True
+#     register: result
+
+   - name: print debug
+     debug:
+      msg: "{{ result.changed }}"
+
+   - name: copy to file
+     copy:
+      content: "x "
+      dest: /home/ec2-user/myvim.log
+
+   handlers:
+   - name: installing lsof in case of problems
+     become: true
+
+   - name: vim installed
+#      copy: content="x " dest=/home/ec2-user/myvim.log
+     file: name=myvim_by_filemod.log state=touch
+#     shell: 'touch myvim.log'
+

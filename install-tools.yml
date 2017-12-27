@@ -1,0 +1,6 @@
+ - hosts: nexus
+   tasks:  
+   - name: installing misc. tools
+     apt: pkg='htop'
+     #environm<ent:
+     #PATH: /bin:/sbin:/usr/bin:/usr/sbin
